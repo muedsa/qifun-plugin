@@ -1,9 +1,9 @@
-package com.muedsa.tvbox.demoplugin.service
+package com.muedsa.tvbox.qifun.service
 
 import com.muedsa.tvbox.api.data.MediaCardType
-import com.muedsa.tvbox.demoplugin.TestPlugin
-import com.muedsa.tvbox.demoplugin.checkMediaCard
-import com.muedsa.tvbox.demoplugin.checkMediaCardRow
+import com.muedsa.tvbox.qifun.TestPlugin
+import com.muedsa.tvbox.qifun.checkMediaCard
+import com.muedsa.tvbox.qifun.checkMediaCardRow
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -13,7 +13,7 @@ class MediaDetailServiceTest {
 
     @Test
     fun getDetailData_test() = runTest{
-        val detail = service.getDetailData("17998", "17998")
+        val detail = service.getDetailData("/voddetail/2459.html", "/voddetail/2459.html")
         check(detail.id.isNotEmpty())
         check(detail.title.isNotEmpty())
         check(detail.detailUrl.isNotEmpty())
@@ -38,7 +38,7 @@ class MediaDetailServiceTest {
 
     @Test
     fun getEpisodePlayInfo_test() = runTest{
-        val detail = service.getDetailData("17998", "17998")
+        val detail = service.getDetailData("/voddetail/2459.html", "/voddetail/2459.html")
         check(detail.playSourceList.isNotEmpty())
         check(detail.playSourceList.flatMap { it.episodeList }.isNotEmpty())
         val mediaPlaySource = detail.playSourceList[0]
@@ -47,4 +47,10 @@ class MediaDetailServiceTest {
         check(playInfo.url.isNotEmpty())
     }
 
+    @Test
+    fun dm295DecodeUrl_test()  {
+        val deUrl = "AnA3AwVxeAV6SQobPA9yUXxheVc4WWISU1NUFgBlfg0HfzNYAn4MSXpdfRcENg4VaVtYTwZzDhx8NnEQAGp6Vi9gP18qbXREeGR1Cyshdht8bnlXLgYOVVE2T1AASHZIMWABXDQIY3xhW3UrMDN1OWR+RwsxcHEsYjR9OjACcmoCVREFMVJwHFIDV1IqC3ETalhhTC5ZeQw="
+        val url = MediaDetailService.dm295DecodeUrl(deUrl)
+        check(url == "https://sf16-cgfe-sg.ibytedtos.com/obj/tos-alisg-ve-0051c001-sg/owilwk0iEwhGUNZAIUPYLzvH1IEBXCAQjkzZA?www.qifun.cc")
+    }
 }

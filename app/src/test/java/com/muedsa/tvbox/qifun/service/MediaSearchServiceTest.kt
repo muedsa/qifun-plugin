@@ -1,7 +1,7 @@
-package com.muedsa.tvbox.demoplugin.service
+package com.muedsa.tvbox.qifun.service
 
-import com.muedsa.tvbox.demoplugin.TestPlugin
-import com.muedsa.tvbox.demoplugin.checkMediaCardRow
+import com.muedsa.tvbox.qifun.TestPlugin
+import com.muedsa.tvbox.qifun.checkMediaCardRow
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -11,7 +11,7 @@ class MediaSearchServiceTest {
 
     @Test
     fun searchMedias_test() = runTest {
-        val row = service.searchMedias("GIRLS BAND CRY")
+        val row = service.searchMedias("哭泣少女乐队")
         checkMediaCardRow(row = row)
     }
 }

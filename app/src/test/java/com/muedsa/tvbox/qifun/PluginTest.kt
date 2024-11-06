@@ -1,4 +1,4 @@
-package com.muedsa.tvbox.demoplugin
+package com.muedsa.tvbox.qifun
 
 import kotlinx.coroutines.test.runTest
 import org.junit.Test

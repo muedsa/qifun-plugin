@@ -14,11 +14,11 @@ if (keystorePropertiesFile.exists() && keystorePropertiesFile.canRead()) {
 }
 
 android {
-    namespace = "com.muedsa.tvbox.demoplugin"
+    namespace = "com.muedsa.tvbox.qifun"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.muedsa.tvbox.demoplugin"
+        applicationId = "com.muedsa.tvbox.qifun"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -63,9 +63,8 @@ android {
     }
 }
 dependencies {
-    //implementation(libs.androidx.core.ktx)
-    implementation(project(":api"))
-
+    compileOnly(project(":api"))
+    testImplementation(project(":api"))
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
 }

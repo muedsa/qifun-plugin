@@ -1,4 +1,4 @@
-package com.muedsa.tvbox.demoplugin
+package com.muedsa.tvbox.qifun
 
 import com.muedsa.tvbox.api.data.MediaCard
 import com.muedsa.tvbox.api.data.MediaCardRow
@@ -13,6 +13,7 @@ fun checkMediaCardRow(row: MediaCardRow) {
     check(row.list.isNotEmpty())
     check(row.cardWidth > 0)
     check(row.cardHeight > 0)
+    println("# ${row.title}")
     row.list.forEach {
         checkMediaCard(card = it, cardType = row.cardType)
     }
@@ -24,7 +25,9 @@ fun checkMediaCard(card: MediaCard, cardType: MediaCardType) {
     check(card.detailUrl.isNotEmpty())
     if (cardType != MediaCardType.NOT_IMAGE) {
         check(card.coverImageUrl.isNotEmpty())
+        println("> ${card.title}(${card.detailUrl}) ${card.coverImageUrl}")
     }  else {
         check(card.backgroundColor > 0)
+        println("> ${card.title}(${card.detailUrl}) ${card.backgroundColor}")
     }
 }
