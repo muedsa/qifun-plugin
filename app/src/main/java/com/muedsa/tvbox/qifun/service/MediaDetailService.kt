@@ -50,10 +50,18 @@ class MediaDetailService(
         val descriptionArr = mutableListOf<String>()
         val excerpt = infoEl.selectFirst(".info-excerpt")
             ?.children()
-            ?.joinToString(" | ") { it.text().trim() }
+            ?.mapNotNull {
+                val e = it.text().trim()
+                e.ifBlank { null }
+            }
+            ?.joinToString(" | ")
         infoEl.selectFirst(".info-tags")
             ?.children()
-            ?.joinToString(" | ") { it.text().trim() }
+            ?.mapNotNull {
+                val e = it.text().trim()
+                e.ifBlank { null }
+            }
+            ?.joinToString(" | ")
             ?.let { descriptionArr.add(it) }
         infoEl.selectFirst(".info-btn .info-content")?.text()?.trim()?.let {
             descriptionArr.add(it)
@@ -151,6 +159,9 @@ class MediaDetailService(
             .feignChrome(referrer = referrer, cookieStore = cookieStore)
             .get()
             .body()
+        if (body.selectFirst(".mac_msg_jump") != null) {
+            throw RuntimeException("网站需要验证码, 暂未实现验证码功能")
+        }
         val scriptEl =
             body.selectFirst(".site-content .container .row .col .wpmytube-player script")
                 ?: throw RuntimeException("解析地址失败 scriptEl")
@@ -228,13 +239,9 @@ class MediaDetailService(
                         httpHeaders = mapOf("Referrer" to referrer)
                     )
                 },
-                "tk" to { playerAAAA, referrer, cookieStore ->
-                    val body =
-                        Jsoup.connect("https://www.qifun.cc/art/tkzy.php?url=${playerAAAA.url}")
-                            .feignChrome(referrer = referrer, cookieStore = cookieStore)
-                            .get()
-                            .body()
-                    TODO("暂未实现")
+                "tk" to { _, _, _ ->
+                    // https://www.qifun.cc/art/tkzy.php?url=
+                    throw RuntimeException("不可用的播放源")
                 },
                 "ATQP" to { playerAAAA, referrer, cookieStore ->
                     val body =
