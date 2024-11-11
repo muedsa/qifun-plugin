@@ -98,7 +98,9 @@ class MainScreenService(
             .get()
             .body()
         if (body.selectFirst(".mac_msg_jump") != null) {
-            throw RuntimeException("网站需要验证码, 暂未实现验证码功能")
+            throw RuntimeException(
+                body.selectFirst(".mac_msg_jump >.text")?.text() ?: "请求被阻止，请稍后重试"
+            )
         }
         body.selectFirst(".site-content .container section")?.let {
             appendSection(rowTitle= rowTitle, sectionEl = it, rows = rows)
