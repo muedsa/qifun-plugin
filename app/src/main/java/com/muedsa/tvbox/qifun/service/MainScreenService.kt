@@ -5,18 +5,21 @@ import com.muedsa.tvbox.api.data.MediaCardRow
 import com.muedsa.tvbox.api.service.IMainScreenService
 import com.muedsa.tvbox.qifun.QiFunConsts
 import com.muedsa.tvbox.tool.feignChrome
-import org.jsoup.Jsoup
+import com.muedsa.tvbox.tool.get
+import com.muedsa.tvbox.tool.parseHtml
+import com.muedsa.tvbox.tool.toRequestBuild
+import okhttp3.OkHttpClient
 import org.jsoup.nodes.Element
-import java.net.CookieStore
 
 class MainScreenService(
-    private val cookieStore: CookieStore
+    private val okHttpClient: OkHttpClient
 ) : IMainScreenService {
 
     override suspend fun getRowsData(): List<MediaCardRow> {
-        val body = Jsoup.connect("${QiFunConsts.SITE_URL}/")
-            .feignChrome(cookieStore = cookieStore)
-            .get()
+        val body = "${QiFunConsts.SITE_URL}/".toRequestBuild()
+            .feignChrome()
+            .get(okHttpClient = okHttpClient)
+            .parseHtml()
             .body()
         if (body.selectFirst(".mac_msg_jump") != null) {
             throw RuntimeException("网站需要验证码, 暂未实现验证码功能")
@@ -93,9 +96,10 @@ class MainScreenService(
     }
 
     private fun appendLabelRow(labelPath: String, rowTitle: String, rows: MutableList<MediaCardRow>) {
-        val body = Jsoup.connect("${QiFunConsts.SITE_URL}/label${labelPath}")
-            .feignChrome(cookieStore = cookieStore)
-            .get()
+        val body = "${QiFunConsts.SITE_URL}/label${labelPath}".toRequestBuild()
+            .feignChrome()
+            .get(okHttpClient = okHttpClient)
+            .parseHtml()
             .body()
         if (body.selectFirst(".mac_msg_jump") != null) {
             throw RuntimeException(

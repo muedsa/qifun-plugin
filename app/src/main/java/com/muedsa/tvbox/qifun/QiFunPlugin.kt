@@ -11,27 +11,22 @@ import com.muedsa.tvbox.qifun.service.MediaDetailService
 import com.muedsa.tvbox.qifun.service.MediaSearchService
 import com.muedsa.tvbox.qifun.service.VerifyService
 import com.muedsa.tvbox.tool.PluginCookieJar
-import com.muedsa.tvbox.tool.PluginCookieStore
 import com.muedsa.tvbox.tool.SharedCookieSaver
 import com.muedsa.tvbox.tool.createOkHttpClient
 
 class QiFunPlugin(tvBoxContext: TvBoxContext) : IPlugin(tvBoxContext = tvBoxContext) {
 
-    private val cookieSaver by lazy {
-        SharedCookieSaver(
-            store = tvBoxContext.store
-        )
-    }
-    private val cookieStore by lazy { PluginCookieStore(saver = cookieSaver) }
     private val okHttpClient by lazy {
         createOkHttpClient(
             debug = tvBoxContext.debug,
-            cookieJar = PluginCookieJar(saver = cookieSaver)
+            cookieJar = PluginCookieJar(
+                saver = SharedCookieSaver(store = tvBoxContext.store)
+            )
         )
     }
     private val verifyService by lazy { VerifyService(okHttpClient = okHttpClient) }
-    private val mainScreenService by lazy { MainScreenService(cookieStore = cookieStore) }
-    private val mediaDetailService by lazy { MediaDetailService(cookieStore = cookieStore) }
+    private val mainScreenService by lazy { MainScreenService(okHttpClient = okHttpClient) }
+    private val mediaDetailService by lazy { MediaDetailService(okHttpClient = okHttpClient) }
     private val mediaSearchService by lazy {
         MediaSearchService(
             verifyService = verifyService,

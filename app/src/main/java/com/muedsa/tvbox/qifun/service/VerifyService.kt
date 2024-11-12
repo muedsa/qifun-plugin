@@ -6,13 +6,15 @@ import com.muedsa.tvbox.qifun.helper.BitmapTool
 import com.muedsa.tvbox.qifun.QiFunConsts
 import com.muedsa.tvbox.qifun.data.VERIFY_DATA_SET
 import com.muedsa.tvbox.qifun.helper.MathHelper
-import com.muedsa.tvbox.qifun.helper.feignChrome
 import com.muedsa.tvbox.qifun.model.VerifyResult
 import com.muedsa.tvbox.tool.LenientJson
+import com.muedsa.tvbox.tool.feignChrome
+import com.muedsa.tvbox.tool.get
+import com.muedsa.tvbox.tool.post
+import com.muedsa.tvbox.tool.toRequestBuild
 import kotlinx.coroutines.delay
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import timber.log.Timber
 
 
@@ -24,13 +26,9 @@ class VerifyService(
 
     suspend fun tryVerify(type: String = "search"): Boolean {
         for (i in 0..maxRetryTimes) {
-            val imgResp = okHttpClient.newCall(
-                Request.Builder()
-                    .url("${QiFunConsts.SITE_URL}/index.php/verify/index.html?")
-                    .feignChrome()
-                    .get()
-                    .build()
-            ).execute()
+            val imgResp = "${QiFunConsts.SITE_URL}/index.php/verify/index.html?".toRequestBuild()
+                .feignChrome()
+                .get(okHttpClient = okHttpClient)
             val imgByteArray = imgResp.body!!.bytes()
             val bitmap = BitmapFactory.decodeByteArray(imgByteArray, 0, imgByteArray.size)
             val binaryBitmap = BitmapTool.toBinaryBitmap(bitmap = bitmap, flag = 127)
@@ -53,13 +51,11 @@ class VerifyService(
                     )
                 }.joinToString("") { it.toString() }
                 Timber.i("验证码可能是:$verifyCode")
-                val verifyResp = okHttpClient.newCall(
-                    Request.Builder()
-                        .url("${QiFunConsts.SITE_URL}/index.php/ajax/verify_check?type=${type}&verify=${verifyCode}")
-                        .addHeader("X-Requested-With", "XMLHttpRequest")
-                        .post(FormBody.Builder().build())
-                        .build()
-                ).execute()
+                val verifyResp = "${QiFunConsts.SITE_URL}/index.php/ajax/verify_check?type=${type}&verify=${verifyCode}"
+                    .toRequestBuild()
+                    .feignChrome()
+                    .addHeader("X-Requested-With", "XMLHttpRequest")
+                    .post(body = FormBody.Builder().build(), okHttpClient = okHttpClient)
                 if (verifyResp.isSuccessful) {
                     val verifyResultJson = verifyResp.body!!.string()
                     Timber.i("验证结果:$verifyResultJson")

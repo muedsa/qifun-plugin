@@ -4,13 +4,13 @@ import com.muedsa.tvbox.api.data.MediaCard
 import com.muedsa.tvbox.api.data.MediaCardRow
 import com.muedsa.tvbox.api.service.IMediaSearchService
 import com.muedsa.tvbox.qifun.QiFunConsts
-import com.muedsa.tvbox.qifun.helper.feignChrome
 import com.muedsa.tvbox.qifun.service.MainScreenService.Companion.getRelativeUrl
+import com.muedsa.tvbox.tool.feignChrome
+import com.muedsa.tvbox.tool.get
+import com.muedsa.tvbox.tool.parseHtml
+import com.muedsa.tvbox.tool.toRequestBuild
 import kotlinx.coroutines.delay
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
-import okhttp3.Request
-import org.jsoup.Jsoup
 
 class MediaSearchService(
     private val verifyService: VerifyService,
@@ -20,17 +20,12 @@ class MediaSearchService(
         verifyAndSearch(query = query, verified = false)
 
     private suspend fun verifyAndSearch(query: String, verified: Boolean): MediaCardRow {
-        val url = "${QiFunConsts.SITE_URL}/vodsearch/-------------.html?wd=$query".toHttpUrl()
-        val resp = okHttpClient.newCall(
-            request = Request.Builder()
-                .url(url)
-                .feignChrome(referrer = if (verified) url.toString() else null)
-                .build()
-        ).execute()
-        if (!resp.isSuccessful) {
-            throw RuntimeException("请求失败")
-        }
-        val body = Jsoup.parse(resp.body!!.string()).body()
+        val url = "${QiFunConsts.SITE_URL}/vodsearch/-------------.html?wd=$query"
+        val body = url.toRequestBuild()
+            .feignChrome()
+            .get(okHttpClient = okHttpClient)
+            .parseHtml()
+            .body()
         if (body.selectFirst(".mac_msg_jump") != null) {
             if (body.selectFirst(".mac_msg_jump .mac_verify") != null) {
                 if (verified || !verifyService.tryVerify("search")) {
