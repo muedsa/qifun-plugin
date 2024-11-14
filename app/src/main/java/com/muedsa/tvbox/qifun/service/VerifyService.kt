@@ -8,6 +8,7 @@ import com.muedsa.tvbox.qifun.data.VERIFY_DATA_SET
 import com.muedsa.tvbox.qifun.helper.MathHelper
 import com.muedsa.tvbox.qifun.model.VerifyResult
 import com.muedsa.tvbox.tool.LenientJson
+import com.muedsa.tvbox.tool.checkSuccess
 import com.muedsa.tvbox.tool.feignChrome
 import com.muedsa.tvbox.tool.get
 import com.muedsa.tvbox.tool.post
@@ -29,6 +30,7 @@ class VerifyService(
             val imgResp = "${QiFunConsts.SITE_URL}/index.php/verify/index.html?".toRequestBuild()
                 .feignChrome()
                 .get(okHttpClient = okHttpClient)
+                .checkSuccess()
             val imgByteArray = imgResp.body!!.bytes()
             val bitmap = BitmapFactory.decodeByteArray(imgByteArray, 0, imgByteArray.size)
             val binaryBitmap = BitmapTool.toBinaryBitmap(bitmap = bitmap, flag = 127)
@@ -56,6 +58,7 @@ class VerifyService(
                     .feignChrome()
                     .addHeader("X-Requested-With", "XMLHttpRequest")
                     .post(body = FormBody.Builder().build(), okHttpClient = okHttpClient)
+                    .checkSuccess()
                 if (verifyResp.isSuccessful) {
                     val verifyResultJson = verifyResp.body!!.string()
                     Timber.i("验证结果:$verifyResultJson")

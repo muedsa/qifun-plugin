@@ -11,6 +11,7 @@ import com.muedsa.tvbox.api.service.IMediaDetailService
 import com.muedsa.tvbox.qifun.QiFunConsts
 import com.muedsa.tvbox.qifun.model.PlayerAAAA
 import com.muedsa.tvbox.tool.LenientJson
+import com.muedsa.tvbox.tool.checkSuccess
 import com.muedsa.tvbox.tool.decodeBase64ToStr
 import com.muedsa.tvbox.tool.feignChrome
 import com.muedsa.tvbox.tool.get
@@ -32,6 +33,7 @@ class MediaDetailService(
         val body = "${QiFunConsts.SITE_URL}$detailUrl".toRequestBuild()
             .feignChrome()
             .get(okHttpClient = okHttpClient)
+            .checkSuccess()
             .parseHtml()
             .body()
         if (body.selectFirst(".mac_msg_jump") != null) {
@@ -163,6 +165,7 @@ class MediaDetailService(
         val body = playUrl.toRequestBuild()
             .feignChrome(referer = referrer)
             .get(okHttpClient = okHttpClient)
+            .checkSuccess()
             .parseHtml()
             .body()
         if (body.selectFirst(".mac_msg_jump") != null) {
@@ -205,6 +208,7 @@ class MediaDetailService(
                     "https://www.qifun.cc/art/plyr.php?url=${playerAAAA.url}".toRequestBuild()
                         .feignChrome(referer = referrer)
                         .get(okHttpClient = okHttpClient)
+                        .checkSuccess()
                         .parseHtml()
                         .body()
                 val vid = QIFUNQP_VID_REGEX.find(body.html())?.groups?.get(1)?.value
@@ -215,6 +219,7 @@ class MediaDetailService(
                 val body = "https://www.qifun.cc/art/qf88.php?url=${playerAAAA.url}".toRequestBuild()
                     .feignChrome(referer = referrer)
                     .get(okHttpClient = okHttpClient)
+                    .checkSuccess()
                     .parseHtml()
                     .body()
                 val decodeUrl = DM295_DECODE_URL_REGEX.find(body.html())?.groups?.get(1)?.value
@@ -232,6 +237,7 @@ class MediaDetailService(
                 val body = "https://www.qifun.cc/art/aut.php?url=${playerAAAA.url}".toRequestBuild()
                     .feignChrome(referer = referrer)
                     .get(okHttpClient = okHttpClient)
+                    .checkSuccess()
                     .parseHtml()
                     .body()
                 var decodeUrl = ATQP_URL_REGEX.find(body.html())?.groups?.get(1)?.value

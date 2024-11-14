@@ -5,6 +5,7 @@ import com.muedsa.tvbox.api.data.MediaCardRow
 import com.muedsa.tvbox.api.service.IMediaSearchService
 import com.muedsa.tvbox.qifun.QiFunConsts
 import com.muedsa.tvbox.qifun.service.MainScreenService.Companion.getRelativeUrl
+import com.muedsa.tvbox.tool.checkSuccess
 import com.muedsa.tvbox.tool.feignChrome
 import com.muedsa.tvbox.tool.get
 import com.muedsa.tvbox.tool.parseHtml
@@ -24,6 +25,7 @@ class MediaSearchService(
         val body = url.toRequestBuild()
             .feignChrome()
             .get(okHttpClient = okHttpClient)
+            .checkSuccess()
             .parseHtml()
             .body()
         if (body.selectFirst(".mac_msg_jump") != null) {
