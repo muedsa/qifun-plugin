@@ -10,9 +10,11 @@ import com.muedsa.tvbox.qifun.service.MainScreenService
 import com.muedsa.tvbox.qifun.service.MediaDetailService
 import com.muedsa.tvbox.qifun.service.MediaSearchService
 import com.muedsa.tvbox.qifun.service.VerifyService
+import com.muedsa.tvbox.tool.IPv6Checker
 import com.muedsa.tvbox.tool.PluginCookieJar
 import com.muedsa.tvbox.tool.SharedCookieSaver
 import com.muedsa.tvbox.tool.createOkHttpClient
+import java.util.concurrent.TimeUnit
 
 class QiFunPlugin(tvBoxContext: TvBoxContext) : IPlugin(tvBoxContext = tvBoxContext) {
 
@@ -21,8 +23,12 @@ class QiFunPlugin(tvBoxContext: TvBoxContext) : IPlugin(tvBoxContext = tvBoxCont
             debug = tvBoxContext.debug,
             cookieJar = PluginCookieJar(
                 saver = SharedCookieSaver(store = tvBoxContext.store)
-            )
-        )
+            ),
+            onlyIpv4 = tvBoxContext.iPv6Status != IPv6Checker.IPv6Status.SUPPORTED
+        ) {
+            callTimeout(40, TimeUnit.SECONDS)
+            readTimeout(60, TimeUnit.SECONDS)
+        }
     }
     private val verifyService by lazy { VerifyService(okHttpClient = okHttpClient) }
     private val mainScreenService by lazy { MainScreenService(okHttpClient = okHttpClient) }
