@@ -1,6 +1,9 @@
 package com.muedsa.tvbox.qifun.service
 
 import com.muedsa.tvbox.api.data.MediaCardType
+import com.muedsa.tvbox.api.data.MediaEpisode
+import com.muedsa.tvbox.api.data.MediaPlaySource
+import com.muedsa.tvbox.qifun.QiFunConsts
 import com.muedsa.tvbox.qifun.TestPlugin
 import com.muedsa.tvbox.qifun.checkMediaCard
 import com.muedsa.tvbox.qifun.checkMediaCardRow
@@ -38,19 +41,18 @@ class MediaDetailServiceTest {
 
     @Test
     fun getEpisodePlayInfo_test() = runTest{
-        val detail = service.getDetailData("/voddetail/2459.html", "/voddetail/2459.html")
-        check(detail.playSourceList.isNotEmpty())
-        check(detail.playSourceList.flatMap { it.episodeList }.isNotEmpty())
-        val mediaPlaySource = detail.playSourceList[0]
-        val mediaEpisode = mediaPlaySource.episodeList[0]
+        val mediaPlaySource = MediaPlaySource(
+            id = "",
+            name = "",
+            episodeList = listOf()
+        )
+        val mediaEpisode = MediaEpisode(
+            id = "",
+            name = "",
+            flag5 = "/vodplay/5043-3-1.html",
+            flag6 = "${QiFunConsts.SITE_URL}/voddetail/5043.html"
+        )
         val playInfo = service.getEpisodePlayInfo(mediaPlaySource, mediaEpisode)
         check(playInfo.url.isNotEmpty())
-    }
-
-    @Test
-    fun dm295DecodeUrl_test()  {
-        val deUrl = "AnA3AwVxeAV6SQobPA9yUXxheVc4WWISU1NUFgBlfg0HfzNYAn4MSXpdfRcENg4VaVtYTwZzDhx8NnEQAGp6Vi9gP18qbXREeGR1Cyshdht8bnlXLgYOVVE2T1AASHZIMWABXDQIY3xhW3UrMDN1OWR+RwsxcHEsYjR9OjACcmoCVREFMVJwHFIDV1IqC3ETalhhTC5ZeQw="
-        val url = MediaDetailService.dm295DecodeUrl(deUrl)
-        check(url == "https://sf16-cgfe-sg.ibytedtos.com/obj/tos-alisg-ve-0051c001-sg/owilwk0iEwhGUNZAIUPYLzvH1IEBXCAQjkzZA?www.qifun.cc")
     }
 }

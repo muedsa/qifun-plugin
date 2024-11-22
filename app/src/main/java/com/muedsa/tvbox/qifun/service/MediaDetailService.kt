@@ -21,6 +21,7 @@ import com.muedsa.tvbox.tool.toRequestBuild
 import kotlinx.coroutines.delay
 import okhttp3.OkHttpClient
 import org.jsoup.nodes.Element
+import timber.log.Timber
 
 class MediaDetailService(
     private val okHttpClient: OkHttpClient
@@ -183,6 +184,7 @@ class MediaDetailService(
                 urlNext = playerAAAA.urlNext.decodeBase64ToStr()
             )
         }
+        Timber.d("解析地址: $playerAAAA")
         return if (playerAAAA.url.endsWith(".m3u8", false)
             || playerAAAA.url.endsWith(".mp4", false)
         ) {
@@ -205,7 +207,7 @@ class MediaDetailService(
         mapOf<String, (PlayerAAAA, String) -> MediaHttpSource>(
             "qifunqp" to { playerAAAA, referrer ->
                 val body =
-                    "https://www.qifun.cc/art/plyr.php?url=${playerAAAA.url}".toRequestBuild()
+                    "${QiFunConsts.SITE_URL}/art/plyr.php?url=${playerAAAA.url}".toRequestBuild()
                         .feignChrome(referer = referrer)
                         .get(okHttpClient = okHttpClient)
                         .checkSuccess()
@@ -216,25 +218,38 @@ class MediaDetailService(
                 MediaHttpSource(url = vid, httpHeaders = mapOf("Referrer" to referrer))
             },
             "dm295" to { playerAAAA, referrer ->
-                val body = "https://www.qifun.cc/art/qf88.php?url=${playerAAAA.url}".toRequestBuild()
+                val body =
+                    "${QiFunConsts.SITE_URL}/art/qf88.php?url=${playerAAAA.url}".toRequestBuild()
                     .feignChrome(referer = referrer)
                     .get(okHttpClient = okHttpClient)
                     .checkSuccess()
                     .parseHtml()
                     .body()
-                val decodeUrl = DM295_DECODE_URL_REGEX.find(body.html())?.groups?.get(1)?.value
+                val decodeUrl = DECODE_URL_REGEX.find(body.html())?.groups?.get(1)?.value
                     ?: throw RuntimeException("解析播放源地址失败 dm295->decodeUrl")
                 MediaHttpSource(
-                    url = dm295DecodeUrl(decodeUrl),
+                    url = decodeUrl(decodeUrl),
                     httpHeaders = mapOf("Referrer" to referrer)
                 )
             },
-            "tk" to { _, _ ->
-                // https://www.qifun.cc/art/tkzy.php?url=
-                throw RuntimeException("不可用的播放源")
+            "tk" to { playerAAAA, referrer ->
+                val body =
+                    "${QiFunConsts.SITE_URL}/art/tkzy5.php?url=${playerAAAA.url}".toRequestBuild()
+                        .feignChrome(referer = referrer)
+                        .get(okHttpClient = okHttpClient)
+                        .checkSuccess()
+                        .parseHtml()
+                        .body()
+                val decodeUrl = DECODE_URL_REGEX.find(body.html())?.groups?.get(1)?.value
+                    ?: throw RuntimeException("解析播放源地址失败 tk->decodeUrl")
+                MediaHttpSource(
+                    url = decodeUrl(decodeUrl),
+                    httpHeaders = mapOf("Referrer" to referrer)
+                )
             },
             "ATQP" to { playerAAAA, referrer ->
-                val body = "https://www.qifun.cc/art/aut.php?url=${playerAAAA.url}".toRequestBuild()
+                val body =
+                    "${QiFunConsts.SITE_URL}/art/aut.php?url=${playerAAAA.url}".toRequestBuild()
                     .feignChrome(referer = referrer)
                     .get(okHttpClient = okHttpClient)
                     .checkSuccess()
@@ -247,10 +262,10 @@ class MediaDetailService(
                         httpHeaders = mapOf("Referrer" to referrer)
                     )
                 } else {
-                    decodeUrl = DM295_DECODE_URL_REGEX.find(body.html())?.groups?.get(1)?.value
+                    decodeUrl = DECODE_URL_REGEX.find(body.html())?.groups?.get(1)?.value
                         ?: throw RuntimeException("解析播放源地址失败 ATQP->decodeUrl")
                     MediaHttpSource(
-                        url = dm295DecodeUrl(decodeUrl),
+                        url = decodeUrl(decodeUrl),
                         httpHeaders = mapOf("Referrer" to referrer)
                     )
                 }
@@ -266,16 +281,16 @@ class MediaDetailService(
         private val PLAYER_INFO_REGEX =
             "<script type=\"text/javascript\">var player_aaaa=(\\{.*?\\})</script>".toRegex()
         private val QIFUNQP_VID_REGEX = "var vid = '(.*?)';".toRegex()
-        private val DM295_DECODE_URL_REGEX = "url: strdecode\\('(.*?)'\\),".toRegex()
+        private val DECODE_URL_REGEX = "src: strdecode\\('(.*?)'\\),".toRegex()
         private val ATQP_URL_REGEX = "var url = '(.*?\\.m3u8)';".toRegex()
         @OptIn(ExperimentalStdlibApi::class)
-        val DM295_DECODE_KEY = "405468858".md5().toHexString().toCharArray()
+        val DECODE_KEY = "123456".md5().toHexString().toCharArray()
 
-        fun dm295DecodeUrl(str: String): String {
+        fun decodeUrl(str: String): String {
             val charArr = str.decodeBase64ToStr().toCharArray()
             val strBuilder = StringBuilder()
             charArr.forEachIndexed { index, c ->
-                strBuilder.append((c.code xor DM295_DECODE_KEY[index % DM295_DECODE_KEY.size].code).toChar())
+                strBuilder.append((c.code xor DECODE_KEY[index % DECODE_KEY.size].code).toChar())
             }
             return strBuilder.toString().decodeBase64ToStr()
         }
