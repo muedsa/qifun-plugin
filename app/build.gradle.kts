@@ -67,6 +67,15 @@ android {
             isIncludeAndroidResources = true
         }
     }
+
+    // 修改APK文件名
+    applicationVariants.all {
+        outputs.all {
+            if (this is com.android.build.gradle.internal.api.ApkVariantOutputImpl) {
+                outputFileName = "${rootProject.name}-${versionName}-${buildType.name}.apk.tbp"
+            }
+        }
+    }
 }
 dependencies {
     compileOnly(project(":api"))
