@@ -1,5 +1,7 @@
 package com.muedsa.tvbox.qifun.service
 
+import com.muedsa.tvbox.api.data.DanmakuData
+import com.muedsa.tvbox.api.data.DanmakuDataFlow
 import com.muedsa.tvbox.api.data.MediaCard
 import com.muedsa.tvbox.api.data.MediaCardRow
 import com.muedsa.tvbox.api.data.MediaDetail
@@ -272,6 +274,11 @@ class MediaDetailService(
             },
             "mqifun" to { _, _ -> throw RuntimeException("不可用的播放源") }
         )
+
+    override suspend fun getEpisodeDanmakuDataList(episode: MediaEpisode): List<DanmakuData> =
+        emptyList()
+
+    override suspend fun getEpisodeDanmakuDataFlow(episode: MediaEpisode): DanmakuDataFlow? = null
 
     companion object {
         fun isDetailUrl(detailUrl: String): Boolean =
