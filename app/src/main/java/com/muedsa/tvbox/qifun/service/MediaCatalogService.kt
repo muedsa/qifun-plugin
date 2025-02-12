@@ -65,6 +65,10 @@ class MediaCatalogService(
                                 name = "剧场版",
                                 value = "2",
                             ),
+                            MediaCatalogOptionItem(
+                                name = "海外剧",
+                                value = "21",
+                            ),
                         ),
                         required = true
                     )
