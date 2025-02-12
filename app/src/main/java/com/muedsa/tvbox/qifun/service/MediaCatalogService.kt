@@ -98,7 +98,7 @@ class MediaCatalogService(
         }
 
         return body.select(".site-content .content-header .video-filter .filter-box").mapNotNull { filterEl ->
-            val title = filterEl.selectFirst(".filter-title")?.text()?.trim()?.removePrefix("：")
+            val title = filterEl.selectFirst(".filter-title")?.text()?.trim()?.removeSuffix("：")
             val swiperSlideEls = filterEl.select(".swiper .swiper-slide")
             if (title != null && swiperSlideEls.isNotEmpty()) {
                 MediaCatalogOption(
