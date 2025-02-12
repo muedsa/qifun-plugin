@@ -191,7 +191,7 @@ class MediaDetailService(
             || playerAAAA.url.endsWith(".mp4", false)
         ) {
             MediaHttpSource(url = playerAAAA.url, httpHeaders = mapOf("Referrer" to playUrl))
-        } else if (parseFunctionMap.containsKey(playerAAAA.from)) {
+        } else if (PARSER_URL_MAP.containsKey(playerAAAA.from)) {
             step2(playerAAAA = playerAAAA, referrer = playUrl)
         } else {
             MediaHttpSource(url = playerAAAA.url, httpHeaders = mapOf("Referrer" to playUrl))
@@ -200,80 +200,38 @@ class MediaDetailService(
 
     private suspend fun step2(playerAAAA: PlayerAAAA, referrer: String): MediaHttpSource {
         delay(200)
-        val parseFunction = parseFunctionMap[playerAAAA.from]
-            ?: throw RuntimeException("解析地址失败 parseFunction, $playerAAAA")
-        return parseFunction.invoke(playerAAAA, referrer)
+        var url = PARSER_URL_MAP[playerAAAA.from]!!
+        url = url.replace("{url}", playerAAAA.url)
+        val bodyHtml = url.toRequestBuild()
+            .feignChrome(referer = referrer)
+            .get(okHttpClient = okHttpClient)
+            .checkSuccess()
+            .parseHtml()
+            .body()
+            .html()
+        var result = STR_DECODE_URL_REGEX.find(bodyHtml)
+        if (result != null && result.groups[1]?.value != null) {
+            return MediaHttpSource(
+                url = decodeUrl(result.groups[1]!!.value),
+                httpHeaders = mapOf("Referrer" to referrer)
+            )
+        }
+        result = QIFUNQP_VID_REGEX.find(bodyHtml)
+        if (result != null && result.groups[1]?.value != null) {
+            return MediaHttpSource(
+                url = result.groups[1]!!.value,
+                httpHeaders = mapOf("Referrer" to referrer)
+            )
+        }
+        result = ATQP_URL_REGEX.find(bodyHtml)
+        if (result != null && result.groups[1]?.value != null) {
+            return MediaHttpSource(
+                url = result.groups[1]!!.value,
+                httpHeaders = mapOf("Referrer" to referrer)
+            )
+        }
+        throw RuntimeException("解析播放源地址失败, $playerAAAA")
     }
-
-    private val parseFunctionMap =
-        mapOf<String, (PlayerAAAA, String) -> MediaHttpSource>(
-            "qifunqp" to { playerAAAA, referrer ->
-                val body =
-                    "${QiFunConsts.SITE_URL}/art/plyr.php?url=${playerAAAA.url}".toRequestBuild()
-                        .feignChrome(referer = referrer)
-                        .get(okHttpClient = okHttpClient)
-                        .checkSuccess()
-                        .parseHtml()
-                        .body()
-                val vid = QIFUNQP_VID_REGEX.find(body.html())?.groups?.get(1)?.value
-                    ?: throw RuntimeException("解析播放源地址失败 qifunqp->vid")
-                MediaHttpSource(url = vid, httpHeaders = mapOf("Referrer" to referrer))
-            },
-            "dm295" to { playerAAAA, referrer ->
-                val body =
-                    "${QiFunConsts.SITE_URL}/art/qf88.php?url=${playerAAAA.url}".toRequestBuild()
-                    .feignChrome(referer = referrer)
-                    .get(okHttpClient = okHttpClient)
-                    .checkSuccess()
-                    .parseHtml()
-                    .body()
-                val decodeUrl = DECODE_URL_REGEX.find(body.html())?.groups?.get(1)?.value
-                    ?: throw RuntimeException("解析播放源地址失败 dm295->decodeUrl")
-                MediaHttpSource(
-                    url = decodeUrl(decodeUrl),
-                    httpHeaders = mapOf("Referrer" to referrer)
-                )
-            },
-            "tk" to { playerAAAA, referrer ->
-                val body =
-                    "${QiFunConsts.SITE_URL}/art/tkzy5.php?url=${playerAAAA.url}".toRequestBuild()
-                        .feignChrome(referer = referrer)
-                        .get(okHttpClient = okHttpClient)
-                        .checkSuccess()
-                        .parseHtml()
-                        .body()
-                val decodeUrl = DECODE_URL_REGEX.find(body.html())?.groups?.get(1)?.value
-                    ?: throw RuntimeException("解析播放源地址失败 tk->decodeUrl")
-                MediaHttpSource(
-                    url = decodeUrl(decodeUrl),
-                    httpHeaders = mapOf("Referrer" to referrer)
-                )
-            },
-            "ATQP" to { playerAAAA, referrer ->
-                val body =
-                    "${QiFunConsts.SITE_URL}/art/aut.php?url=${playerAAAA.url}".toRequestBuild()
-                    .feignChrome(referer = referrer)
-                    .get(okHttpClient = okHttpClient)
-                    .checkSuccess()
-                    .parseHtml()
-                    .body()
-                var decodeUrl = ATQP_URL_REGEX.find(body.html())?.groups?.get(1)?.value
-                if (decodeUrl != null) {
-                    MediaHttpSource(
-                        url = decodeUrl,
-                        httpHeaders = mapOf("Referrer" to referrer)
-                    )
-                } else {
-                    decodeUrl = DECODE_URL_REGEX.find(body.html())?.groups?.get(1)?.value
-                        ?: throw RuntimeException("解析播放源地址失败 ATQP->decodeUrl")
-                    MediaHttpSource(
-                        url = decodeUrl(decodeUrl),
-                        httpHeaders = mapOf("Referrer" to referrer)
-                    )
-                }
-            },
-            "mqifun" to { _, _ -> throw RuntimeException("不可用的播放源") }
-        )
 
     override suspend fun getEpisodeDanmakuDataList(episode: MediaEpisode): List<DanmakuData> =
         emptyList()
@@ -287,8 +245,18 @@ class MediaDetailService(
 
         private val PLAYER_INFO_REGEX =
             "<script type=\"text/javascript\">var player_aaaa=(\\{.*?\\})</script>".toRegex()
+
+        private val PARSER_URL_MAP = mapOf(
+            "qifunqp" to "${QiFunConsts.SITE_URL}/art/plyr.php?url={url}",
+            "wxv" to "${QiFunConsts.SITE_URL}/art/wxv.php?url={url}",
+            "zhihu" to "${QiFunConsts.SITE_URL}/art/qfzh.php?url={url}",
+            "dm295" to "${QiFunConsts.SITE_URL}/art/qf888.php?url={url}",
+            "mqifun" to "https://162.14.98.254?vcode={url}",
+            "tk" to "${QiFunConsts.SITE_URL}/art/tk6.php?url={url}",
+            "ATQP" to "${QiFunConsts.SITE_URL}/art/aut.php?url={url}",
+        )
         private val QIFUNQP_VID_REGEX = "var vid = '(.*?)';".toRegex()
-        private val DECODE_URL_REGEX = "src: strdecode\\('(.*?)'\\),".toRegex()
+        private val STR_DECODE_URL_REGEX = "strdecode\\('(.*?)'\\),".toRegex()
         private val ATQP_URL_REGEX = "var url = '(.*?\\.m3u8)';".toRegex()
         @OptIn(ExperimentalStdlibApi::class)
         val DECODE_KEY = "123456".md5().toHexString().toCharArray()
