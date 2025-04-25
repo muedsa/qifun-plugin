@@ -202,35 +202,28 @@ class MediaDetailService(
         delay(200)
         var url = PARSER_URL_MAP[playerAAAA.from]!!
         url = url.replace("{url}", playerAAAA.url)
-        val bodyHtml = url.toRequestBuild()
+        var html = url.toRequestBuild()
             .feignChrome(referer = referrer)
             .get(okHttpClient = okHttpClient)
             .checkSuccess()
             .parseHtml()
             .body()
             .html()
-        var result = STR_DECODE_URL_REGEX.find(bodyHtml)
-        if (result != null && result.groups[1]?.value != null) {
-            return MediaHttpSource(
-                url = decodeUrl(result.groups[1]!!.value),
-                httpHeaders = mapOf("Referrer" to referrer)
-            )
+        html = decryptHtml(html)
+        var playUrl = parseUrl1(html)
+        if (playUrl == null) {
+            playUrl = parseUrl2(html)
         }
-        result = QIFUNQP_VID_REGEX.find(bodyHtml)
-        if (result != null && result.groups[1]?.value != null) {
-            return MediaHttpSource(
-                url = result.groups[1]!!.value,
-                httpHeaders = mapOf("Referrer" to referrer)
-            )
+        if (playUrl == null) {
+            playUrl = parseUrl3(html)
         }
-        result = ATQP_URL_REGEX.find(bodyHtml)
-        if (result != null && result.groups[1]?.value != null) {
-            return MediaHttpSource(
-                url = result.groups[1]!!.value,
-                httpHeaders = mapOf("Referrer" to referrer)
-            )
+        if (playUrl == null) {
+            playUrl = parseUrl4(html)
         }
-        throw RuntimeException("解析播放源地址失败, $playerAAAA")
+        return MediaHttpSource(
+            url = playUrl ?: throw RuntimeException("解析播放源地址失败, $playerAAAA"),
+            httpHeaders = mapOf("Referrer" to referrer)
+        )
     }
 
     override suspend fun getEpisodeDanmakuDataList(episode: MediaEpisode): List<DanmakuData> =
@@ -250,24 +243,70 @@ class MediaDetailService(
             "qifunqp" to "${QiFunConsts.SITE_URL}/art/plyr.php?url={url}",
             "wxv" to "${QiFunConsts.SITE_URL}/art/wxv.php?url={url}",
             "zhihu" to "${QiFunConsts.SITE_URL}/art/qfzh.php?url={url}",
+            "LMM" to "${QiFunConsts.SITE_URL}/art/LMM.php?url={url}",
             "dm295" to "${QiFunConsts.SITE_URL}/art/qf888.php?url={url}",
             "mqifun" to "https://162.14.98.254?vcode={url}",
             "tk" to "${QiFunConsts.SITE_URL}/art/tk6.php?url={url}",
             "ATQP" to "${QiFunConsts.SITE_URL}/art/aut.php?url={url}",
+            "lzm3u8" to "${QiFunConsts.SITE_URL}/art/plyr.php?url={url}",
+            "heimuer" to "${QiFunConsts.SITE_URL}/art/plyr.php?url={url}",
+            "qfyp" to "${QiFunConsts.SITE_URL}/art/qfyp.php?url={url}",
+            "vwnet" to "${QiFunConsts.SITE_URL}/art/QINB.php?url={url}",
         )
         private val QIFUNQP_VID_REGEX = "var vid = '(.*?)';".toRegex()
         private val STR_DECODE_URL_REGEX = "strdecode\\('(.*?)'\\),".toRegex()
         private val ATQP_URL_REGEX = "var url = '(.*?\\.m3u8)';".toRegex()
         @OptIn(ExperimentalStdlibApi::class)
-        val DECODE_KEY = "123456".md5().toHexString().toCharArray()
+        private val DECODE_KEY = "123456".md5().toHexString().toCharArray()
 
-        fun decodeUrl(str: String): String {
+        private fun decodeUrl(str: String): String {
             val charArr = str.decodeBase64ToStr().toCharArray()
             val strBuilder = StringBuilder()
             charArr.forEachIndexed { index, c ->
                 strBuilder.append((c.code xor DECODE_KEY[index % DECODE_KEY.size].code).toChar())
             }
             return strBuilder.toString().decodeBase64ToStr()
+        }
+
+        private val ENCRYPTED_HTML_REGEX = "const encryptedHtml = \"([^\"]+)\"".toRegex()
+        private val ENC_URL_REGEX = "const encUrl = \"([^\"]+)\"".toRegex()
+        fun decrypt(encryptedText: String): String = encryptedText.reversed().decodeBase64ToStr()
+
+        fun decryptHtml(html: String): String {
+            var decryptedHtml = html
+            val result = ENCRYPTED_HTML_REGEX.find(html)
+            result?.groups[1]?.value?.also {
+                decryptedHtml = decrypt(it)
+            }
+            return decryptedHtml
+        }
+
+        fun parseUrl1(html: String): String? {
+            return ENC_URL_REGEX.find(html)?.let { a ->
+                a.groups[1]?.value?.let { b ->
+                    decrypt(b)
+                }
+            }
+        }
+
+        fun parseUrl2(html: String): String? {
+            return STR_DECODE_URL_REGEX.find(html)?.let { a ->
+                a.groups[1]?.value?.let { b ->
+                    decodeUrl(b)
+                }
+            }
+        }
+
+        fun parseUrl3(html: String): String? {
+            return QIFUNQP_VID_REGEX.find(html)?.let { a ->
+                a.groups[1]?.value
+            }
+        }
+
+        fun parseUrl4(html: String): String? {
+            return ATQP_URL_REGEX.find(html)?.let { a ->
+                a.groups[1]?.value
+            }
         }
     }
 }
