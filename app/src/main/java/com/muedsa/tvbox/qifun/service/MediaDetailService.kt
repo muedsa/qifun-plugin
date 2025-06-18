@@ -220,6 +220,9 @@ class MediaDetailService(
         if (playUrl == null) {
             playUrl = parseUrl4(html)
         }
+        if (playUrl == null) {
+            playUrl = parseUrl5(html)
+        }
         return MediaHttpSource(
             url = playUrl ?: throw RuntimeException("解析播放源地址失败, $playerAAAA"),
             httpHeaders = mapOf("Referrer" to referrer)
@@ -256,6 +259,7 @@ class MediaDetailService(
         private val QIFUNQP_VID_REGEX = "var vid = '(.*?)';".toRegex()
         private val STR_DECODE_URL_REGEX = "strdecode\\('(.*?)'\\),".toRegex()
         private val ATQP_URL_REGEX = "var url = '(.*?\\.m3u8)';".toRegex()
+        private val QIFUNQP_URL_REGEX = "var encryptedUrl = '(.*?)';".toRegex()
         @OptIn(ExperimentalStdlibApi::class)
         private val DECODE_KEY = "123456".md5().toHexString().toCharArray()
 
@@ -306,6 +310,12 @@ class MediaDetailService(
         fun parseUrl4(html: String): String? {
             return ATQP_URL_REGEX.find(html)?.let { a ->
                 a.groups[1]?.value
+            }
+        }
+
+        fun parseUrl5(html: String): String? {
+            return QIFUNQP_URL_REGEX.find(html)?.let { a ->
+                a.groups[1]?.value?.decodeBase64ToStr()
             }
         }
     }
