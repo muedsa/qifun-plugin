@@ -19,12 +19,12 @@ if (keystorePropertiesFile.exists() && keystorePropertiesFile.canRead()) {
 
 android {
     namespace = "com.muedsa.tvbox.qifun"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.muedsa.tvbox.qifun"
         minSdk = 24
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 12
         versionName = "0.1.0"
     }
