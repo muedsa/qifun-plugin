@@ -243,6 +243,7 @@ class MediaDetailService(
             "<script type=\"text/javascript\">var player_aaaa=(\\{.*?\\})</script>".toRegex()
 
         private val PARSER_URL_MAP = mapOf(
+            "M" to "${QiFunConsts.SITE_URL}/art/plyr.php?url={url}",
             "qifunqp" to "${QiFunConsts.SITE_URL}/art/plyr.php?url={url}",
             "wxv" to "${QiFunConsts.SITE_URL}/art/wxv.php?url={url}",
             "zhihu" to "${QiFunConsts.SITE_URL}/art/qfzh.php?url={url}",
