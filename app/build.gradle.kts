@@ -66,7 +66,6 @@ android {
         jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
-    @Suppress("UnstableApiUsage")
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
