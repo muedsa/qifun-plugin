@@ -62,10 +62,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
-    }
-
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -81,9 +77,16 @@ android {
         }
     }
 }
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+    }
+}
+
 dependencies {
-    compileOnly(project(":api"))
-    testImplementation(project(":api"))
+    compileOnly(libs.tvbox.api)
+    testImplementation(libs.tvbox.api)
     testImplementation(libs.junit4)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.androidx.test.core)
