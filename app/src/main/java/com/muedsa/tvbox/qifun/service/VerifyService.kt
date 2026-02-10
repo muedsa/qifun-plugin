@@ -31,7 +31,7 @@ class VerifyService(
                 .feignChrome()
                 .get(okHttpClient = okHttpClient)
                 .checkSuccess()
-            val imgByteArray = imgResp.body!!.bytes()
+            val imgByteArray = imgResp.body.bytes()
             val bitmap = BitmapFactory.decodeByteArray(imgByteArray, 0, imgByteArray.size)
             val binaryBitmap = BitmapTool.toBinaryBitmap(bitmap = bitmap, flag = 127)
             Timber.i("二值图\n${BitmapTool.binaryBitmapToPrintString(binaryBitmap = binaryBitmap)}")
@@ -60,7 +60,7 @@ class VerifyService(
                     .post(body = FormBody.Builder().build(), okHttpClient = okHttpClient)
                     .checkSuccess()
                 if (verifyResp.isSuccessful) {
-                    val verifyResultJson = verifyResp.body!!.string()
+                    val verifyResultJson = verifyResp.body.string()
                     Timber.i("验证结果:$verifyResultJson")
                     val verifyResult = LenientJson.decodeFromString<VerifyResult>(verifyResultJson)
                     if (verifyResult.code == 1) {
